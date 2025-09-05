@@ -134,9 +134,6 @@ function toggleMenu(){
 let products = JSON.parse(localStorage.getItem('products')||'[]');
 if(products.length===0){
   products = [
-    {id:'p1',name:'Espresso',price:8.5,vat:0.08,img:'https://via.placeholder.com/150'},
-    {id:'p2',name:'Latte',price:12,vat:0.08,img:'https://via.placeholder.com/150'},
-    {id:'p3',name:'Kanapka club',price:18,vat:0.08,img:'https://via.placeholder.com/150'}
   ];
 }
 let cart = JSON.parse(localStorage.getItem('cart')||'[]');
@@ -209,7 +206,7 @@ function confirmPayment(){
   cart.length=0;
   renderCart();
   closeModal();
-  alert('Dziękujemy! Dołącz na Discord: https://dc.gg/moonpacks');
+  alert('Dziękujemy! Dołącz na Discord po odebranie nagrody: https://dc.gg/moonpacks');
   renderPurchaseLogs();
 }
 
@@ -341,3 +338,5 @@ loadTabs();
 </script>
 </body>
 </html>
+
+## {id:'p3',name:'Kanapka club',price:18,vat:0.08,img:'https://via.placeholder.com/150'} ##
