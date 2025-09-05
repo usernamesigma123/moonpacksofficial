@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoonPacks</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background:#f3f4f6; color:#111827;}
+header { background: linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899); color:white; padding:25px; text-align:center; position:relative; border-radius:0 0 20px 20px;}
+.menu-button { position:absolute; top:20px; right:20px; cursor:pointer; font-size:28px;}
+.menu-dropdown { display:none; position:absolute; top:60px; right:20px; background:white; border:1px solid #ccc; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.menu-dropdown button { display:block; width:100%; padding:10px 15px; border:none; background:none; text-align:left; cursor:pointer;}
+.menu-dropdown button:hover { background:#f3f4f6;}
+.container { max-width:1200px; margin:20px auto; display:grid; grid-template-columns:2fr 1fr; gap:20px; padding:0 10px;}
+.products, .cart, .admin-panel { background:white; border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.1); padding:20px;}
+.products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:20px;}
+.product { border-radius:15px; overflow:hidden; background:white; box-shadow:0 2px 10px rgba(0,0,0,0.1); text-align:center; cursor:pointer; transition:0.2s;}
+.product img { width:100%; height:120px; object-fit:cover;}
+.product:hover { transform:translateY(-5px); box-shadow:0 6px 20px rgba(0,0,0,0.15);}
+.product h4 { margin:10px 0 5px;}
+.cart-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #e5e7eb;}
+.cart-item button { padding:4px 8px; margin:0 3px; border-radius:5px; border:none; background:#6366f1; color:white; cursor:pointer;}
+.cart-item button:hover { background:#4f46e5;}
+.totals div { display:flex; justify-content:space-between; margin-top:5px;}
+.actions { margin-top:15px; display:flex; gap:10px;}
+.btn { flex:1; padding:10px; border:none; border-radius:10px; background:#6366f1; color:white; cursor:pointer; font-size:14px;}
+.btn:hover { background:#4f46e5;}
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center;}
+.modal.active { display:flex;}
+.modal-content { background:white; padding:25px; border-radius:15px; width:320px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.close { cursor:pointer; float:right; font-size:22px;}
+.admin-panel { display:none; }
+.admin-section { margin-bottom:25px;}
+.terminal-output { background:#111827; color:#f3f4f6; padding:10px; border-radius:8px; font-family:monospace; height:150px; overflow-y:auto; margin-bottom:10px;}
+.terminal-input { width:100%; padding:10px; font-family:monospace; border-radius:8px; border:1px solid #ccc;}
+.tab-button { margin-right:5px; padding:5px 10px; border:none; border-radius:5px; cursor:pointer; background:#e5e7eb;}
+.tab-button.active { background:#6366f1; color:white;}
+#admin-login-btn { position:fixed; bottom:20px; left:20px; padding:10px 15px; background:#6366f1; color:white; border:none; border-radius:10px; cursor:pointer;}
+</style>
+</head>
+<body>
+<header>
+<h1>MoonPacks</h1>
+<p>Szybkie zakupy • Piękny interfejs • Płynna obsługa</p>
+<div class="menu-button" onclick="toggleMenu()">⋮</div>
+<div class="menu-dropdown" id="menu-dropdown">
+  <button onclick="showLogin()">Logowanie administratora</button>
+</div>
+</header>
+
+<div class="container" id="shop-container">
+  <div class="products">
+    <h2>Produkty</h2>
+    <div class="products-grid" id="products-grid"></div>
+  </div>
+  <div class="cart">
+    <h2>Koszyk</h2>
+    <div id="cart-items"></div>
+    <div class="totals">
+      <div><span>Netto:</span><span id="netto">0,00 zł</span></div>
+      <div><span>VAT:</span><span id="vat">0,00 zł</span></div>
+      <div><span>Rabat:</span><span id="discount">0,00 zł</span></div>
+      <div style="font-weight:bold;border-top:1px solid #ccc;margin-top:5px;padding-top:5px;"><span>Suma:</span><span id="total">0,00 zł</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="selectPaymentMethod('cash')">Gotówka</button>
+      <button class="btn" onclick="selectPaymentMethod('card')">Karta</button>
+      <button class="btn" onclick="selectPaymentMethod('blik')">BLIK</button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-panel" id="admin-panel">
+<h2>Panel Administratora</h2>
+
+<div class="admin-section">
+<h3>Ustawienie publicznego ID</h3>
+<input type="text" id="public-id-input" placeholder="Twoje ID">
+<button class="btn" onclick="setPublicId()">Ustaw ID</button>
+<p id="public-id-status"></p>
+</div>
+
+<div class="admin-section">
+<h3>Zakładki</h3>
+<input type="text" id="new-tab-title" placeholder="Tytuł">
+<input type="text" id="new-tab-content" placeholder="Treść zakładki">
+<button class="btn" onclick="addTab()">Dodaj zakładkę</button>
+<div id="tab-list" style="margin-top:10px;"></div>
+<div id="tab-content" style="margin-top:10px; padding:10px; border:1px solid #ccc; border-radius:8px;"></div>
+</div>
+
+<div class="admin-section">
+<h3>Produkty</h3>
+<input type="text" id="new-product-name" placeholder="Nazwa">
+<input type="number" id="new-product-price" placeholder="Cena">
+<input type="text" id="new-product-img" placeholder="Link obrazka">
+<button class="btn" onclick="addProduct()">Dodaj produkt</button>
+<ul id="product-list"></ul>
+</div>
+
+<div class="admin-section">
+<h3>Terminal</h3>
+<div class="terminal-output" id="terminal-output"></div>
+<input class="terminal-input" id="terminal-input" placeholder="Komenda..." onkeydown="handleCommand(event)">
+</div>
+
+<div class="admin-section">
+<h3>Logi zakupów</h3>
+<div id="purchase-log" style="height:200px; overflow-y:auto; background:#f3f4f6; padding:10px; border-radius:8px;"></div>
+</div>
+
+<button class="btn" onclick="logout()">Wyloguj</button>
+</div>
+
+<div class="modal" id="payment-modal">
+<div class="modal-content">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <h3>Wybór płatności</h3>
+  <p>Kwota do zapłaty: <span id="pay-amount">0,00 zł</span></p>
+  <button class="btn" onclick="confirmPayment()">Potwierdź</button>
+</div>
+</div>
+
+<button id="admin-login-btn" onclick="showLogin()">Admin</button>
+
+<script>
+// MENU
+function toggleMenu(){
+  const menu = document.getElementById('menu-dropdown');
+  menu.style.display = (menu.style.display==='block')?'none':'block';
+}
+
+// DATA
+let products = JSON.parse(localStorage.getItem('products')||'[]');
+if(products.length===0){
+  products = [
+    {id:'p1',name:'Espresso',price:8.5,vat:0.08,img:'https://via.placeholder.com/150'},
+    {id:'p2',name:'Latte',price:12,vat:0.08,img:'https://via.placeholder.com/150'},
+    {id:'p3',name:'Kanapka club',price:18,vat:0.08,img:'https://via.placeholder.com/150'}
+  ];
+}
+let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+let publicUserId = localStorage.getItem('publicUserId')||'';
+let tabs = JSON.parse(localStorage.getItem('tabs')||'[]');
+let purchaseLogs = JSON.parse(localStorage.getItem('purchaseLogs')||'[]');
+
+// PRODUCTS
+function renderProducts(){
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML='';
+  products.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='product';
+    div.innerHTML=`<img src="${p.img}" alt="${p.name}"><h4>${p.name}</h4><p>${p.price.toFixed(2)} zł</p>`;
+    div.onclick=()=>{ addToCart(p); alert('Dołącz na Discord: https://dc.gg/moonpacks'); };
+    grid.appendChild(div);
+  });
+}
+
+// CART
+function renderCart(){
+  const container=document.getElementById('cart-items');
+  container.innerHTML='';
+  let netto=0,vat=0;
+  cart.forEach(i=>{
+    netto+=i.price*i.qty;
+    vat+=(i.price*i.vat)*i.qty;
+    const div=document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML=`<span>${i.name}</span>
+      <div>
+      <button onclick="changeQty('${i.id}',-1)">-</button>${i.qty}
+      <button onclick="changeQty('${i.id}',1)">+</button>
+      <strong>${(i.price*i.qty).toFixed(2)} zł</strong>
+      </div>`;
+    container.appendChild(div);
+  });
+  document.getElementById('netto').textContent=netto.toFixed(2)+' zł';
+  document.getElementById('vat').textContent=vat.toFixed(2)+' zł';
+  document.getElementById('discount').textContent='0,00 zł';
+  document.getElementById('total').textContent=(netto+vat).toFixed(2)+' zł';
+  localStorage.setItem('cart',JSON.stringify(cart));
+}
+function addToCart(product){
+  const existing=cart.find(i=>i.id===product.id);
+  if(existing) existing.qty++; else cart.push({...product,qty:1});
+  renderCart();
+}
+function changeQty(id,delta){
+  const item=cart.find(i=>i.id===id);
+  if(!item) return;
+  item.qty+=delta;
+  if(item.qty<=0) cart.splice(cart.indexOf(item),1);
+  renderCart();
+}
+
+// PAYMENT
+let currentPaymentMethod='';
+function selectPaymentMethod(method){
+  currentPaymentMethod=method;
+  document.getElementById('payment-modal').classList.add('active');
+  document.getElementById('pay-amount').textContent=document.getElementById('total').textContent;
+}
+function closeModal(){ document.getElementById('payment-modal').classList.remove('active'); }
+function confirmPayment(){
+  if(!publicUserId){ alert("Ustaw najpierw swoje ID!"); return; }
+  cart.forEach(item=>{ purchaseLogs.push({userId:publicUserId,name:item.name,qty:item.qty,price:item.price*item.qty,timestamp:new Date().toLocaleString()}); });
+  localStorage.setItem('purchaseLogs',JSON.stringify(purchaseLogs));
+  cart.length=0;
+  renderCart();
+  closeModal();
+  alert('Dziękujemy! Dołącz na Discord: https://dc.gg/moonpacks');
+  renderPurchaseLogs();
+}
+
+// ADMIN
+function showLogin(){
+  const login=prompt('Login:');
+  const pass=prompt('Hasło:');
+  if(login==='adminaccount51' && pass==='w2r3g6'){
+    document.getElementById('shop-container').style.display='none';
+    document.getElementById('admin-panel').style.display='block';
+    loadTabs();
+    renderProducts();
+    renderPurchaseLogs();
+    renderProductListAdmin();
+    document.getElementById('public-id-status').textContent=publicUserId?'ID ustawione: '+publicUserId:'ID nie ustawione';
+  }else{ alert('Błędne dane logowania'); }
+}
+function logout(){
+  document.getElementById('shop-container').style.display='grid';
+  document.getElementById('admin-panel').style.display='none';
+}
+
+// PUBLIC ID
+function setPublicId(){
+  const input=document.getElementById('public-id-input');
+  if(publicUserId){ alert('ID już ustawione!'); return; }
+  if(input.value.trim()===''){ alert('Wpisz ID'); return; }
+  publicUserId=input.value.trim();
+  localStorage.setItem('publicUserId',publicUserId);
+  document.getElementById('public-id-status').textContent='ID ustawione: '+publicUserId;
+}
+
+// PURCHASE LOGS
+function renderPurchaseLogs(){
+  const container=document.getElementById('purchase-log');
+  container.innerHTML='';
+  purchaseLogs.forEach(log=>{
+    const div=document.createElement('div');
+    div.textContent=`[${log.timestamp}] ${log.userId} kupił ${log.qty}x ${log.name} za ${log.price.toFixed(2)} zł`;
+    container.appendChild(div);
+  });
+}
+
+// ADMIN TABS
+function addTab(){
+  const title=document.getElementById('new-tab-title').value.trim();
+  const content=document.getElementById('new-tab-content').value.trim();
+  if(!title||!content){ alert('Wpisz tytuł i treść'); return; }
+  tabs.push({title,content});
+  localStorage.setItem('tabs',JSON.stringify(tabs));
+  renderTabButtons();
+}
+function renderTabButtons(){
+  const container=document.getElementById('tab-list');
+  container.innerHTML='';
+  tabs.forEach((tab,i)=>{
+    const btn=document.createElement('button');
+    btn.className='tab-button';
+    btn.textContent=tab.title;
+    btn.onclick=()=>{ document.getElementById('tab-content').textContent=tab.content; document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
+    container.appendChild(btn);
+  });
+}
+function loadTabs(){
+  tabs=JSON.parse(localStorage.getItem('tabs')||'[]');
+  renderTabButtons();
+}
+
+// ADMIN PRODUCTS
+function addProduct(){
+  const name=document.getElementById('new-product-name').value.trim();
+  const price=parseFloat(document.getElementById('new-product-price').value);
+  const img=document.getElementById('new-product-img').value.trim();
+  if(!name||isNaN(price)||!img){ alert('Wpisz poprawne dane'); return; }
+  const id='p'+Date.now();
+  products.push({id,name,price,vat:0.08,img});
+  localStorage.setItem('products',JSON.stringify(products));
+  renderProducts();
+  renderProductListAdmin();
+}
+function removeProduct(id){
+  products=products.filter(p=>p.id!==id);
+  localStorage.setItem('products',JSON.stringify(products));
+  renderProducts();
+  renderProductListAdmin();
+}
+function renderProductListAdmin(){
+  const ul=document.getElementById('product-list');
+  ul.innerHTML='';
+  products.forEach(p=>{
+    const li=document.createElement('li');
+    li.textContent=p.name+' ('+p.price+' zł) ';
+    const btn=document.createElement('button');
+    btn.textContent='Usuń';
+    btn.onclick=()=>removeProduct(p.id);
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+}
+
+// TERMINAL
+function handleCommand(e){
+  if(e.key==='Enter'){
+    const cmd=document.getElementById('terminal-input').value.trim();
+    executeCommand(cmd);
+    document.getElementById('terminal-input').value='';
+  }
+}
+function logTerminal(msg){
+  const out=document.getElementById('terminal-output');
+  out.innerHTML+=msg+'\n';
+  out.scrollTop=out.scrollHeight;
+}
+function executeCommand(cmd){
+  const parts=cmd.split(' ');
+  const action=parts[0], userId=parts[1], value=parts[2];
+  switch(action){
+    case 'giveCash': logTerminal(`Dodano ${value} zł dla ${userId}`); break;
+    case 'giveDiscount': logTerminal(`Dodano rabat ${value}% dla ${userId}`); break;
+    default: logTerminal('Nieznana komenda');
+  }
+}
+
+// INIT
+renderProducts();
+renderCart();
+renderPurchaseLogs();
+loadTabs();
+</script>
+</body>
+</html>
